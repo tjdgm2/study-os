@@ -69,14 +69,7 @@ const formatMinutes = (minutes: number) => {
   return `${hours}時間${remainingMinutes}分`
 }
 
-const formatTimer = (totalSeconds: number) => {
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
 
-  return `${String(minutes).padStart(2, '0')}:${String(
-    seconds,
-  ).padStart(2, '0')}`
-}
 
 function App() {
 
@@ -125,7 +118,7 @@ function App() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
   const [view, setView] = useState<'today' | 'records'>('today')
-  const [calendarDate, setCalendarDate] = useState(new Date())
+  const [calendarDate] = useState(new Date())
   const calendarYear = calendarDate.getFullYear()
   const calendarMonth = calendarDate.getMonth()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
