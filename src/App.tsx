@@ -122,6 +122,7 @@ function App() {
   const calendarYear = calendarDate.getFullYear()
   const calendarMonth = calendarDate.getMonth()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [timerMode, setTimerMode] = useState("countdown")
 
 
   useEffect(() => {
@@ -129,16 +130,14 @@ function App() {
       return
     }
     const timerId = window.setInterval(() => {
-      setElapsedSeconds((currentSeconds) => {
-        return currentSeconds + 1
-      })
+      setElapsedSeconds((prev) => prev + 1)
     }, 1000)
 
     //タイマー停止時や画面を閉じるときにintervalを解除する
     return () => {
       window.clearInterval(timerId)
     }
-  }, [isTimerRunning])
+  }, [isTimerRunning, timerMode])
 
 
 
@@ -313,19 +312,19 @@ function App() {
   ]
 
   const hasRecordOnDay = (day: number | null) => {
-    if(day === null) {
+    if (day === null) {
       return false
     }
 
-    const month = String(calendarMonth + 1).padStart(2,'0')
-    const date = String(day).padStart(2,'0')
+    const month = String(calendarMonth + 1).padStart(2, '0')
+    const date = String(day).padStart(2, '0')
     const dateKey = `${calendarYear}-${month}-${date}`
     return records.some((record) => record.date === dateKey)
   }
 
   const getDateKey = (day: number) => {
-    const month = String(calendarMonth + 1).padStart(2,'0')
-    const date = String(day).padStart(2,'0')
+    const month = String(calendarMonth + 1).padStart(2, '0')
+    const date = String(day).padStart(2, '0')
 
     return `${calendarYear}-${month}-${date}`
   }
@@ -333,6 +332,12 @@ function App() {
   const selectedRecords = selectedDate
     ? records.filter((record) => record.date === selectedDate)
     : []
+
+  const displaySeconds =
+    timerMode === "countdown"
+      ? remainingTimerSeconds
+      : elapsedSeconds
+
 
   return (
     <div className="app">
@@ -404,19 +409,37 @@ function App() {
 
                     <h2>{nextTask.title}</h2>
                     <p>
-                      {Math.floor(remainingTimerSeconds / 3600)
+                      {Math.floor(displaySeconds / 3600)
                         .toString()
                         .padStart(2, '0')}
+
                       :
-                      {Math.floor((remainingTimerSeconds % 3600) / 60)
+
+                      {Math.floor((displaySeconds % 3600) / 60)
                         .toString()
                         .padStart(2, '0')}
+
                       :
-                      {(remainingTimerSeconds % 60)
+
+                      {(displaySeconds % 60)
                         .toString()
                         .padStart(2, '0')}
                     </p>
 
+                  </div>
+
+                  <div className="timer-mode-buttons">
+                    <button 
+                      className={timerMode === "countdown" ? "active" : ""}
+                      onClick={() => setTimerMode("countdown")}>
+                      カウントダウン
+                    </button>
+
+                    <button 
+                      className={timerMode === "countup" ? "active" : ""}
+                      onClick={() => setTimerMode("countup")}>
+                      カウントアップ
+                    </button>
                   </div>
 
                   <div className="timer-buttons">
@@ -604,12 +627,12 @@ function App() {
 
               <div className="calendar">
                 <h3>
-                  {calendarYear}年{calendarMonth+1}月
+                  {calendarYear}年{calendarMonth + 1}月
                 </h3>
               </div>
 
               <div className="calendar-weekdays">
-                {['日','月','火','水','木','金','土'].map(
+                {['日', '月', '火', '水', '木', '金', '土'].map(
                   (day) => (
                     <span key={day}>{day}</span>
                   ),
@@ -617,20 +640,18 @@ function App() {
               </div>
 
               <div className="calendar-grid">
-                {calendarDays.map((day,index) => (
+                {calendarDays.map((day, index) => (
                   <button
-                    className={`calendar-day ${
-                      hasRecordOnDay(day) ? 'has-record' : ''
-                    } ${
-                      selectedDate === getDateKey(day)
-                      ? 'selected'
-                      : ''
-                    }`}
+                    className={`calendar-day ${hasRecordOnDay(day) ? 'has-record' : ''
+                      } ${selectedDate === getDateKey(day)
+                        ? 'selected'
+                        : ''
+                      }`}
                     key={`${day}-${index}`}
                     type="button"
                     disabled={day === null}
                     onClick={() => {
-                      if(day !== null) {
+                      if (day !== null) {
                         setSelectedDate(getDateKey(day))
                       }
                     }}
@@ -639,9 +660,9 @@ function App() {
                     {hasRecordOnDay(day) && (
                       <span className="record-dot" />
                     )}
-                    </button>
+                  </button>
                 ))}
-                </div>
+              </div>
 
               {selectedDate === null ? (
                 <p>日付を選ぶと、その日の記録が表示されます。</p>
@@ -656,7 +677,7 @@ function App() {
                         <small>{record.date}・{record.subject}</small>
                       </div>
 
-                      <span className="record-time"> 
+                      <span className="record-time">
                         {Math.round(record.actualSeconds / 60)}分
                       </span>
                     </div>

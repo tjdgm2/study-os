@@ -38,7 +38,29 @@ select {
 }
 
 button {
-  color: inherit;
+  border: 1px solid #ddd;
+  background: #f3f6f7;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+
+.timer-mode-buttons button {
+  background: white;
+  border: 1px solid #ddd;
+}
+
+.timer-mode-buttons button.active {
+  background: var(--aqua);
+  border: 1px solid #ddd;
+  color: white;
 }
 
 .app {
