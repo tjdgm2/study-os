@@ -5,14 +5,16 @@ import {
 } from 'react'
 import './App.css'
 import TaskRow from './TaskRow'
+import SettingsPage from './SettingsPage'
 
 type Task = {
   id: number
   title: string
   subject: string
   duration: number
-  actualMinutes: number
+  actualMinutes?: number
   completed: boolean
+  recordId?: number
 }
 
 type StudyRecord = {
@@ -110,6 +112,127 @@ function App() {
     }
   })
 
+  const [manualRecordDate, setManualRecordDate] = useState(todayKey)
+  const [manualRecordTitle, setManualRecordTitle] = useState('')
+  const [manualRecordSubject, setManualRecordSubject] = useState('TOEIC')
+  const [manualRecordMinutes, setManualRecordMinutes] = useState(30)
+  const [editingRecordId, setEditingRecordId] = useState<number | null>(null)
+
+
+  const addManualRecord = () => {
+    const trimmedTitle = manualRecordTitle.trim()
+
+    if (!trimmedTitle) {
+      return
+    }
+
+    if (editingRecordId !== null) {
+      setRecords((currentRecords) => {
+        const nextRecords = currentRecords.map((record) =>
+          record.id === editingRecordId
+            ? {
+              ...record,
+              date: manualRecordDate,
+              taskTitle: trimmedTitle,
+              subject: manualRecordSubject,
+              actualSeconds: manualRecordMinutes * 60,
+            }
+            : record,
+        )
+
+        localStorage.setItem(
+          RECORDS_STORAGE_KEY,
+          JSON.stringify(nextRecords),
+        )
+
+        return nextRecords
+      })
+
+      if (manualRecordDate === todayKey){
+        updateTasks((currentTasks) => 
+          currentTasks.map((task) =>
+            task.recordId === editingRecordId
+              ? {
+                  ...task,
+                  title: trimmedTitle,
+                  subject: manualRecordSubject,
+                  duration: manualRecordMinutes,
+                  actualMinutes: manualRecordMinutes,
+                }
+              : task,
+            ),
+          )
+      }
+
+      setEditingRecordId(null)
+      setManualRecordTitle('')
+      setManualRecordMinutes(30)
+
+      return
+    }
+
+    const recordId=Date.now()
+
+    const newRecord: StudyRecord = {
+      id: recordId,
+      date: manualRecordDate,
+      taskTitle: trimmedTitle,
+      subject: manualRecordSubject,
+      actualSeconds: manualRecordMinutes * 60,
+    }
+
+    setRecords((currentRecords) => {
+      const nextRecords = [...currentRecords, newRecord]
+
+      localStorage.setItem(
+        RECORDS_STORAGE_KEY,
+        JSON.stringify(nextRecords),
+      )
+
+      return nextRecords
+    })
+
+    if (manualRecordDate === todayKey) {
+      const completedTask: Task = {
+        id: Date.now()+1,
+        recordId: recordId,
+        title: trimmedTitle,
+        subject: manualRecordSubject,
+        duration: manualRecordMinutes,
+        actualMinutes: manualRecordMinutes,
+        completed: true,
+      }
+
+      updateTasks((currentTasks) => [
+        ...currentTasks,
+        completedTask,
+      ])
+    }
+
+    setManualRecordTitle('')
+    setManualRecordMinutes(30)
+  }
+
+  const deleteRecord = (recordId: number) => {
+    setRecords((currentRecords) => {
+      const nextRecords = currentRecords.filter(
+        (record) => record.id !== recordId,
+      )
+
+      localStorage.setItem(
+        RECORDS_STORAGE_KEY,
+        JSON.stringify(nextRecords),
+      )
+
+      return nextRecords
+    })
+
+    updateTasks((currentTasks) => 
+      currentTasks.filter(
+        (task) => task.recordId !== recordId,
+      ),
+    )
+  }
 
   const [isAdding, setIsAdding] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
@@ -117,7 +240,7 @@ function App() {
   const [newTaskDuration, setNewTaskDuration] = useState(30)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
-  const [view, setView] = useState<'today' | 'records'>('today')
+  const [view, setView] = useState<'today' | 'records' | 'settings'>('today')
   const [calendarDate] = useState(new Date())
   const calendarYear = calendarDate.getFullYear()
   const calendarMonth = calendarDate.getMonth()
@@ -339,6 +462,13 @@ function App() {
       : elapsedSeconds
 
 
+  const [subjects, setSubjects] = useState([
+    'TOEIC',
+    '数学',
+    'プログラミング',
+    'その他'
+  ])
+
   return (
     <div className="app">
       <header className="topbar">
@@ -360,13 +490,19 @@ function App() {
           >
             記録
           </button>
+          <button
+            className={view === 'settings' ? 'active' : ''}
+            onClick={() => setView('settings')}
+          >
+            設定
+          </button>
         </nav>
 
         <p className="today-date">{today}</p>
       </header>
 
       <main className="dashboard">
-        {view === 'today' ? (
+        {view === 'today' && (
           <>
             <section className="page-header">
               <div>
@@ -429,13 +565,13 @@ function App() {
                   </div>
 
                   <div className="timer-mode-buttons">
-                    <button 
+                    <button
                       className={timerMode === "countdown" ? "active" : ""}
                       onClick={() => setTimerMode("countdown")}>
                       カウントダウン
                     </button>
 
-                    <button 
+                    <button
                       className={timerMode === "countup" ? "active" : ""}
                       onClick={() => setTimerMode("countup")}>
                       カウントアップ
@@ -620,10 +756,89 @@ function App() {
               </div>
             </footer>
           </>
-        ) : (
+        )} 
+        {view === 'records' && (
           <>
             <section className="records-preview">
               <h2>学習記録</h2>
+
+              <section className="manual-record-section">
+                <h3>
+                  {editingRecordId !== null
+                    ? '編集中'
+                    : '+ 学習記録を追加'}
+                </h3>
+
+                <div className="manual-record-form">
+                  <input
+                    type="date"
+                    value={manualRecordDate}
+                    onChange={(event) =>
+                      setManualRecordDate(event.target.value)
+                    }
+                  />
+
+                  <input
+                    type="text"
+                    value={manualRecordTitle}
+                    onChange={(event) =>
+                      setManualRecordTitle(event.target.value)
+                    }
+                    placeholder="何を勉強した？"
+                  />
+
+                  <select
+                    value={manualRecordSubject}
+                    onChange={(event) =>
+                      setManualRecordSubject(event.target.value)
+                    }
+                  >
+                    <option value="TOEIC">TOEIC</option>
+                    <option value="数学">数学</option>
+                    <option value="プログラミング">
+                      プログラミング
+                    </option>
+                    <option value="その他">その他</option>
+                  </select>
+
+                  <label className="manual-minutes">
+                    <input
+                      type="number"
+                      min="0"
+                      step="5"
+                      value={manualRecordMinutes}
+                      onChange={(event) =>
+                        setManualRecordMinutes(
+                          Number(event.target.value),
+                        )
+                      }
+                    />
+                    <span>分</span>
+                  </label>
+                  
+                  {editingRecordId !== null && (
+                    <button
+                      type="button"
+                      className="manual-record-cancel"
+                      onClick={() => {
+                        setEditingRecordId(null)
+                        setManualRecordTitle('')
+                        setManualRecordMinutes(30)
+                      }}
+                      >
+                        編集をやめる
+                      </button>
+                  )}
+
+                  <button
+                    type="button"
+                    className="manual-record-save"
+                    onClick={addManualRecord}
+                  >
+                    保存
+                  </button>
+                </div>
+              </section>
 
               <div className="calendar">
                 <h3>
@@ -680,12 +895,47 @@ function App() {
                       <span className="record-time">
                         {Math.round(record.actualSeconds / 60)}分
                       </span>
+                      <button
+                        type="button"
+                        className="record-edit-button"
+                        onClick={() => {
+                          setEditingRecordId(record.id)
+                          setManualRecordDate(record.date)
+                          setManualRecordTitle(record.taskTitle)
+                          setManualRecordSubject(record.subject)
+                          setManualRecordMinutes(Math.round(record.actualSeconds / 60),
+                          )
+                        }}
+                      >
+                        編集
+                      </button>
+                      <button
+                        type="button"
+                        className="record-delete-button"
+                        onClick={() => {
+                          const shouldDelete = window.confirm(
+                            'この学習記録を削除しますか？',
+                          )
+
+                          if(shouldDelete) {
+                            deleteRecord(record.id)
+                          }
+                        }}
+                        >
+                          削除
+                        </button>
                     </div>
                   ))}
                 </div>
               )}
             </section>
           </>
+        )}
+        {view === 'settings' && (
+          <SettingsPage 
+            subjects={subjects}
+            setSubjects={setSubjects}
+          />
         )}
       </main>
     </div>

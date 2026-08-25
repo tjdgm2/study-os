@@ -3,8 +3,9 @@ type Task = {
     title: string
     subject: string
     duration: number
-    actualMinutes: number
+    actualMinutes?: number
     completed: boolean
+    recordId?: number
 }
 
 type TaskRowProps = {
