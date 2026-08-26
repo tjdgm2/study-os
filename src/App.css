@@ -917,6 +917,23 @@ button:hover {
   font-weight: 600;
 }
 
+.daily-goal-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.daily-goal-control input {
+  width: 72px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  text-align: center;
+}
+
 @media (max-width: 620px) {
   .timer-buttons {
     width: 100%;

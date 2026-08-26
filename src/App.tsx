@@ -56,6 +56,8 @@ const STORAGE_KEY = 'study-os-tasks'
 const RECORDS_STORAGE_KEY = 'study-os-records'
 const TASK_DATE_STORAGE_KEY = 'study-os-task-date'
 const SUBJECTS_STORAGE_KEY = 'study-os-subjects'
+const DAILY_GOAL_STORAGE_KEY = 'study-os-daily-goal'
+const DAILY_GOAL_DATE_STORAGE_KEY = 'study-os-daily-goal-date'
 
 const formatMinutes = (minutes: number) => {
   if (minutes < 60) {
@@ -248,7 +250,6 @@ function App() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [timerMode, setTimerMode] = useState("countdown")
 
-
   useEffect(() => {
     if (!isTimerRunning) {
       return
@@ -353,6 +354,16 @@ function App() {
       ...currentTasks,
       newTask,
     ])
+    const shouldAddToGoal = window.confirm(
+      `${newTask.duration}分を今日の目標時間にも追加しますか？`,
+    )
+
+    if (shouldAddToGoal) {
+      setDailyGoalMinutes(
+        (currentGoal) =>
+          currentGoal + newTask.duration,
+      )
+    }
 
     setNewTaskTitle('')
     setNewTaskDuration(30)
@@ -405,15 +416,6 @@ function App() {
     setIsTimerRunning(false)
     setElapsedSeconds(0)
   }
-
-  const dailyGoalMinutes = 180
-
-  const progressPercent = Math.min(
-    100,
-    Math.round(
-      (completedMinutes / dailyGoalMinutes) * 100,
-    ),
-  )
 
   const firstDayOfMonth = new Date(
     calendarYear,
@@ -494,6 +496,46 @@ function App() {
     )
   }, [subjects])
 
+  const [dailyGoalMinutes, setDailyGoalMinutes] = useState(() => {
+    const savedDate = localStorage.getItem(
+      DAILY_GOAL_DATE_STORAGE_KEY,
+    )
+
+    const savedGoal = localStorage.getItem(
+      DAILY_GOAL_STORAGE_KEY,
+    )
+
+    if (savedDate !== todayKey) {
+      localStorage.setItem(
+        DAILY_GOAL_DATE_STORAGE_KEY,
+        todayKey,
+      )
+
+      localStorage.setItem(
+        DAILY_GOAL_STORAGE_KEY,
+        '0',
+      )
+
+      return 0;
+    }
+
+    return savedGoal ? Number(savedGoal) : 0
+  })
+
+  useEffect(() => {
+    localStorage.setItem(
+      DAILY_GOAL_STORAGE_KEY,
+      String(dailyGoalMinutes),
+    )
+  }, [dailyGoalMinutes])
+
+  const progressPercent = Math.min(
+    100,
+    Math.round(
+      (completedMinutes / dailyGoalMinutes) * 100,
+    ),
+  )
+
   return (
     <div className="app">
       <header className="topbar">
@@ -544,9 +586,37 @@ function App() {
             <section className="progress-section">
               <div className="progress-heading">
                 <span>今日の目標</span>
-                <strong>
-                  {completedMinutes}/{dailyGoalMinutes}分
-                </strong>
+                <div className="daily-goal-control">
+                  <span>{completedMinutes}/</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={Math.floor(dailyGoalMinutes / 60)}
+                    onChange={(event) => {
+                      const hours = Number(event.target.value)
+                      setDailyGoalMinutes(
+                        hours * 60 + (dailyGoalMinutes % 60),
+                      )
+                    }}
+                  />
+
+                  <span>時間</span>
+
+                  <input
+                    type="number"
+                    min="0"
+                    max="59"
+                    value={dailyGoalMinutes % 60}
+                    onChange={(event) => {
+                      const minutes = Number(event.target.value)
+                      setDailyGoalMinutes(
+                        Math.floor(dailyGoalMinutes / 60) * 60 + minutes,
+                      )
+                    }}
+                  />
+
+                  <span>分</span>
+                </div>
               </div>
             </section>
 
