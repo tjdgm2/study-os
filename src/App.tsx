@@ -55,6 +55,7 @@ const initialTasks: Task[] = [
 const STORAGE_KEY = 'study-os-tasks'
 const RECORDS_STORAGE_KEY = 'study-os-records'
 const TASK_DATE_STORAGE_KEY = 'study-os-task-date'
+const SUBJECTS_STORAGE_KEY = 'study-os-subjects'
 
 const formatMinutes = (minutes: number) => {
   if (minutes < 60) {
@@ -148,20 +149,20 @@ function App() {
         return nextRecords
       })
 
-      if (manualRecordDate === todayKey){
-        updateTasks((currentTasks) => 
+      if (manualRecordDate === todayKey) {
+        updateTasks((currentTasks) =>
           currentTasks.map((task) =>
             task.recordId === editingRecordId
               ? {
-                  ...task,
-                  title: trimmedTitle,
-                  subject: manualRecordSubject,
-                  duration: manualRecordMinutes,
-                  actualMinutes: manualRecordMinutes,
-                }
+                ...task,
+                title: trimmedTitle,
+                subject: manualRecordSubject,
+                duration: manualRecordMinutes,
+                actualMinutes: manualRecordMinutes,
+              }
               : task,
-            ),
-          )
+          ),
+        )
       }
 
       setEditingRecordId(null)
@@ -171,7 +172,7 @@ function App() {
       return
     }
 
-    const recordId=Date.now()
+    const recordId = Date.now()
 
     const newRecord: StudyRecord = {
       id: recordId,
@@ -194,7 +195,7 @@ function App() {
 
     if (manualRecordDate === todayKey) {
       const completedTask: Task = {
-        id: Date.now()+1,
+        id: Date.now() + 1,
         recordId: recordId,
         title: trimmedTitle,
         subject: manualRecordSubject,
@@ -227,7 +228,7 @@ function App() {
       return nextRecords
     })
 
-    updateTasks((currentTasks) => 
+    updateTasks((currentTasks) =>
       currentTasks.filter(
         (task) => task.recordId !== recordId,
       ),
@@ -462,12 +463,36 @@ function App() {
       : elapsedSeconds
 
 
-  const [subjects, setSubjects] = useState([
-    'TOEIC',
-    '数学',
-    'プログラミング',
-    'その他'
-  ])
+  const [subjects, setSubjects] = useState<string[]>(() => {
+
+    const savedSubjects = localStorage.getItem(SUBJECTS_STORAGE_KEY)
+
+    if (!savedSubjects) {
+      return [
+        'TOEIC',
+        '数学',
+        'プログラミング',
+        'その他',
+      ]
+    }
+
+    try {
+      return JSON.parse(savedSubjects) as string[]
+    } catch {
+      return [
+        'TOEIC',
+        '数学',
+        'プログラミング',
+        'その他',
+      ]
+    }
+  })
+  useEffect(() => {
+    localStorage.setItem(
+      SUBJECTS_STORAGE_KEY,
+      JSON.stringify(subjects),
+    )
+  }, [subjects])
 
   return (
     <div className="app">
@@ -674,12 +699,11 @@ function App() {
                       }
                       aria-label="科目"
                     >
-                      <option value="TOEIC">TOEIC</option>
-                      <option value="数学">数学</option>
-                      <option value="プログラミング">
-                        プログラミング
-                      </option>
-                      <option value="その他">その他</option>
+                      {subjects.map((subject) => (
+                        <option key={subject} value={subject}>
+                          {subject}
+                        </option>
+                      ))}
                     </select>
 
                     <label className="duration-field">
@@ -756,7 +780,7 @@ function App() {
               </div>
             </footer>
           </>
-        )} 
+        )}
         {view === 'records' && (
           <>
             <section className="records-preview">
@@ -793,12 +817,11 @@ function App() {
                       setManualRecordSubject(event.target.value)
                     }
                   >
-                    <option value="TOEIC">TOEIC</option>
-                    <option value="数学">数学</option>
-                    <option value="プログラミング">
-                      プログラミング
-                    </option>
-                    <option value="その他">その他</option>
+                    {subjects.map((subject) => (
+                      <option key={subject} value={subject}>
+                        {subject}
+                      </option>
+                    ))}
                   </select>
 
                   <label className="manual-minutes">
@@ -815,7 +838,7 @@ function App() {
                     />
                     <span>分</span>
                   </label>
-                  
+
                   {editingRecordId !== null && (
                     <button
                       type="button"
@@ -825,9 +848,9 @@ function App() {
                         setManualRecordTitle('')
                         setManualRecordMinutes(30)
                       }}
-                      >
-                        編集をやめる
-                      </button>
+                    >
+                      編集をやめる
+                    </button>
                   )}
 
                   <button
@@ -917,13 +940,13 @@ function App() {
                             'この学習記録を削除しますか？',
                           )
 
-                          if(shouldDelete) {
+                          if (shouldDelete) {
                             deleteRecord(record.id)
                           }
                         }}
-                        >
-                          削除
-                        </button>
+                      >
+                        削除
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -932,7 +955,7 @@ function App() {
           </>
         )}
         {view === 'settings' && (
-          <SettingsPage 
+          <SettingsPage
             subjects={subjects}
             setSubjects={setSubjects}
           />

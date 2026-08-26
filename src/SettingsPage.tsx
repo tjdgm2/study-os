@@ -11,6 +11,9 @@ function SettingsPage({
 }: SettingsPageProps) {
 
     const [newSubject, setNewSubject] = useState('')
+    const [editingSubject, setEditingSubject] = useState<string | null>(null)
+    const [editingSubjectName, setEditingSubjectName] = useState('') 
+
 
     const addSubject = () => {
         const trimmedSubject = newSubject.trim()
@@ -25,6 +28,25 @@ function SettingsPage({
         ])
 
         setNewSubject('')
+    }
+
+    const saveEditedSubject = () => {
+        const trimmedName = editingSubjectName.trim()
+
+        if(!editingSubject || !trimmedName) {
+            return 
+        }
+
+        setSubjects((currentSubjects) =>
+            currentSubjects.map((subject) =>
+                subject === editingSubject
+                    ? trimmedName
+                    : subject,
+            ),
+        )
+
+        setEditingSubject(null)
+        setEditingSubjectName('')
     }
 
 
@@ -54,7 +76,61 @@ function SettingsPage({
             <div className="settings-subjects">
                 {subjects.map((subject) => (
                     <div className="settings-subject-row" key={subject}>
-                        {subject}
+                        {editingSubject === subject ? (
+                            <>
+                                <input
+                                    type="text"
+                                    value={editingSubjectName}
+                                    onChange={(event) =>
+                                        setEditingSubjectName(event.target.value)
+                                    }
+                                />
+                    <div className="subject-actions">
+                                <button
+                                    type="button"
+                                    onClick={saveEditedSubject}
+                                >   
+                                    保存    
+                                </button>
+                            </div>
+                            </>
+                        ) : (
+                            <>
+                                <span>{subject}</span>
+                    <div className="subject-actions">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setEditingSubject(subject)
+                                        setEditingSubjectName(subject)
+                                    }}
+                                >
+                                    編集
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const shouldDelete = window.confirm(
+                                            `${subject}を削除しますか？\n過去の学習記録は削除されません。`,
+                                        )
+
+                                        if(!shouldDelete){
+                                            return
+                                        }
+
+                                        setSubjects((currentSubjects) =>
+                                            currentSubjects.filter(
+                                                (currentSubject) => currentSubject !== subject,
+                                            ),
+                                        )
+                                    }}
+                                >
+                                    削除
+                                </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 ))}
             </div>
