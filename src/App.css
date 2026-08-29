@@ -690,18 +690,6 @@ button:hover {
   border-top: 1px solid var(--line);
 }
 
-.record-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  padding: 18px 20px;
-  margin-bottom: 12px;
-
-  background: white;
-  border: 1px solid #eeeeee;
-  border-radius: 16px;
-}
 
 .record-info {
   display: flex;
@@ -717,11 +705,6 @@ button:hover {
   color: #888;
 }
 
-.record-time {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--teal);
-}
 
 .calendar {
   margin: 28px 0 40px;
@@ -846,17 +829,6 @@ button:hover {
   white-space: nowrap;
 }
 
-.record-delete-button {
-  border: none;
-  background: transparent;
-  color: #999;
-  font: inherit;
-  cursor: pointer;
-}
-
-.record-delete-button:hover {
-  color: vaf(--coral);
-}
 
 .settings-page {
   max-width: 900px;
@@ -932,6 +904,72 @@ button:hover {
   border-radius: 8px;
   font: inherit;
   text-align: center;
+}
+
+.study-time-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 32px;
+  padding: 20px 24px;
+
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.study-time-summary span {
+  color: #777;
+}
+
+.study-time-summary strong {
+  font-size: 28px;
+}
+
+.record-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  gap: 24px;
+}
+
+.record-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.record-time {
+  min-width: 70px;
+  text-align: right;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.record-edit-button,
+.record-delete-button {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.record-edit-button {
+  border: 1px solid var(--line);
+  background: var(--aqua-soft);
+}
+
+.record-delete-button {
+  border: none;
+  background: transparent;
+  color: var(--coral);
 }
 
 @media (max-width: 620px) {

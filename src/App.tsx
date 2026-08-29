@@ -56,12 +56,10 @@ const STORAGE_KEY = 'study-os-tasks'
 const RECORDS_STORAGE_KEY = 'study-os-records'
 const TASK_DATE_STORAGE_KEY = 'study-os-task-date'
 const SUBJECTS_STORAGE_KEY = 'study-os-subjects'
-const DAILY_GOAL_STORAGE_KEY = 'study-os-daily-goal'
-const DAILY_GOAL_DATE_STORAGE_KEY = 'study-os-daily-goal-date'
 
 const formatMinutes = (minutes: number) => {
   if (minutes < 60) {
-    return `${minutes}分`
+    return `0時間${minutes}分`
   }
 
   const hours = Math.floor(minutes / 60)
@@ -354,16 +352,7 @@ function App() {
       ...currentTasks,
       newTask,
     ])
-    const shouldAddToGoal = window.confirm(
-      `${newTask.duration}分を今日の目標時間にも追加しますか？`,
-    )
 
-    if (shouldAddToGoal) {
-      setDailyGoalMinutes(
-        (currentGoal) =>
-          currentGoal + newTask.duration,
-      )
-    }
 
     setNewTaskTitle('')
     setNewTaskDuration(30)
@@ -496,45 +485,10 @@ function App() {
     )
   }, [subjects])
 
-  const [dailyGoalMinutes, setDailyGoalMinutes] = useState(() => {
-    const savedDate = localStorage.getItem(
-      DAILY_GOAL_DATE_STORAGE_KEY,
-    )
 
-    const savedGoal = localStorage.getItem(
-      DAILY_GOAL_STORAGE_KEY,
-    )
 
-    if (savedDate !== todayKey) {
-      localStorage.setItem(
-        DAILY_GOAL_DATE_STORAGE_KEY,
-        todayKey,
-      )
 
-      localStorage.setItem(
-        DAILY_GOAL_STORAGE_KEY,
-        '0',
-      )
 
-      return 0;
-    }
-
-    return savedGoal ? Number(savedGoal) : 0
-  })
-
-  useEffect(() => {
-    localStorage.setItem(
-      DAILY_GOAL_STORAGE_KEY,
-      String(dailyGoalMinutes),
-    )
-  }, [dailyGoalMinutes])
-
-  const progressPercent = Math.min(
-    100,
-    Math.round(
-      (completedMinutes / dailyGoalMinutes) * 100,
-    ),
-  )
 
   return (
     <div className="app">
@@ -583,49 +537,12 @@ function App() {
               </p>
             </section>
 
-            <section className="progress-section">
-              <div className="progress-heading">
-                <span>今日の目標</span>
-                <div className="daily-goal-control">
-                  <span>{completedMinutes}/</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={Math.floor(dailyGoalMinutes / 60)}
-                    onChange={(event) => {
-                      const hours = Number(event.target.value)
-                      setDailyGoalMinutes(
-                        hours * 60 + (dailyGoalMinutes % 60),
-                      )
-                    }}
-                  />
-
-                  <span>時間</span>
-
-                  <input
-                    type="number"
-                    min="0"
-                    max="59"
-                    value={dailyGoalMinutes % 60}
-                    onChange={(event) => {
-                      const minutes = Number(event.target.value)
-                      setDailyGoalMinutes(
-                        Math.floor(dailyGoalMinutes / 60) * 60 + minutes,
-                      )
-                    }}
-                  />
-
-                  <span>分</span>
-                </div>
-              </div>
+            <section className="study-time-summary">
+              <span>今日の勉強時間</span>
+              <strong>{formatMinutes(completedMinutes)}</strong>
             </section>
 
-            <div className="progress-track">
-              <div
-                className="progress-fill"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
+
 
             {nextTask ? (
               <section className="next-section">
@@ -985,38 +902,42 @@ function App() {
                         <small>{record.date}・{record.subject}</small>
                       </div>
 
-                      <span className="record-time">
-                        {Math.round(record.actualSeconds / 60)}分
-                      </span>
-                      <button
-                        type="button"
-                        className="record-edit-button"
-                        onClick={() => {
-                          setEditingRecordId(record.id)
-                          setManualRecordDate(record.date)
-                          setManualRecordTitle(record.taskTitle)
-                          setManualRecordSubject(record.subject)
-                          setManualRecordMinutes(Math.round(record.actualSeconds / 60),
-                          )
-                        }}
-                      >
-                        編集
-                      </button>
-                      <button
-                        type="button"
-                        className="record-delete-button"
-                        onClick={() => {
-                          const shouldDelete = window.confirm(
-                            'この学習記録を削除しますか？',
-                          )
+                      <div className="record-actions">
+                        <span className="record-time">
+                          {Math.round(record.actualSeconds / 60)}分
+                        </span>
 
-                          if (shouldDelete) {
-                            deleteRecord(record.id)
-                          }
-                        }}
-                      >
-                        削除
-                      </button>
+                        <button
+                          type="button"
+                          className="record-edit-button"
+                          onClick={() => {
+                            setEditingRecordId(record.id)
+                            setManualRecordDate(record.date)
+                            setManualRecordTitle(record.taskTitle)
+                            setManualRecordSubject(record.subject)
+                            setManualRecordMinutes(
+                              Math.round(record.actualSeconds / 60),
+                            )
+                          }}
+                        >
+                          編集
+                        </button>
+
+                        <button
+                          type="button"
+                          className="record-delete-button"
+                          onClick={() => {
+                            const shouldDelete = window.confirm(
+                              'この学習記録を削除しますか？',
+                            )
+                            if (shouldDelete) {
+                              deleteRecord(record.id)
+                            }
+                          }}
+                        >
+                          削除
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
